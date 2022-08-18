@@ -27,19 +27,29 @@ router.get('/:code', async function (req, res, next) {
       FROM companies
       WHERE code = $1`, [code]
   );
-  debugger;
+  const company = results.rows[0];
+
+
   if (results.rows.length === 0) {
     throw new NotFoundError();
   }
 
+  const invoices = await db.query(`
+  SELECT id FROM invoices
+  WHERE comp_code = $1`, [req.params.code]);
 
-  return res.status(200).json({ company: results.rows[0] });
+  company.invoices = invoices.rows.map(e => e.id);
+
+  debugger;
+
+
+  return res.status(200).json({ company });
 });
 
 
 
 
-/** Add a new company. 
+/** Add a new company.
  * - accepts JSON: {code, name, description}
  * - returns  {company: {code, name, description}} or 404
  */
@@ -47,26 +57,23 @@ router.post('/', async function (req, res, next) {
   const { code, name, description } = req.body;
 
   // wrap in try/catch:
-  
-    const result = await db.query(
-      `INSERT INTO companies (code, name, description)
+
+  const result = await db.query(
+    `INSERT INTO companies (code, name, description)
         VALUES ($1, $2, $3)
         RETURNING code, name, description`,
-        [code, name, description]
-    );
+    [code, name, description]
+  );
 
- 
-  // throw new BadRequestError();
-  
 
   const company = result.rows[0];
-  return res.status(201).json({ company })
+  return res.status(201).json({ company });
 
 });
 
 
 
-/** Edit a company. 
+/** Edit a company.
  * - accepts JSON: {name, description}
  * - returns updated company object: {company: {code, name, description}} or 404
  */
@@ -80,7 +87,7 @@ router.put('/:code', async function (req, res, next) {
           description = $2
           WHERE code = $3
       RETURNING code, name, description`,
-      [name, description, req.params.code]
+    [name, description, req.params.code]
   );
 
   if (result.rows.length === 0) {
@@ -88,28 +95,28 @@ router.put('/:code', async function (req, res, next) {
   }
 
   const company = result.rows[0];
-  return res.status(200).json({ company })
+  return res.status(200).json({ company });
 
 });
 
-/** Delete a company. 
+/** Delete a company.
  * - Returns {status: "deleted"} or 404
  */
 
 router.delete('/:code', async function (req, res, next) {
-  
-  const result = await db.query(`DELETE FROM companies 
+
+  const result = await db.query(`DELETE FROM companies
       WHERE code = $1
       RETURNING code, name, description`,
-      [req.params.code]
+    [req.params.code]
   );
 
-  // assign rows to a variable and test if falsy
+
   if (result.rows.length === 0) {
     throw new NotFoundError();
   }
 
-  return res.status(200).json({status: "deleted"})
+  return res.status(200).json({ status: "deleted" });
 
 });
 
