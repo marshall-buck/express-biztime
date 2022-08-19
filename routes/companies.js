@@ -18,7 +18,7 @@ router.get('/', async function (req, res) {
 
 
 /** get a company by code
- * -returns  {company: {code, name, description}}
+ * -returns  {company: {code, name, invoices, description}}
  */
 router.get('/:code', async function (req, res, next) {
   const code = req.params.code;
